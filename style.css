@@ -23,10 +23,16 @@ body,
 }
 
 .button-bg:hover {
-    background: radial-gradient(ellipse at center, #DC2626, #7f1d1d);
+    background: radial-gradient(ellipse at center, #DC2626, #460809 );
+}
+
+.button-bg:active {
+    background: radial-gradient(ellipse at center, #DF3B3B, #582021);
 }
 
 .fantasy-button{
+    padding-left: 11.73px;
+    padding-right: 11.73px;
     border: 12px solid transparent;
     border-image-source: url("/ui/gold-btn-border.svg");
     border-image-slice: 12;
