@@ -34,7 +34,7 @@ body,
     padding-left: 11.73px;
     padding-right: 11.73px;
     border: 12px solid transparent;
-    border-image-source: url("/ui/gold-btn-border.svg");
+    border-image-source: url("../client/public/ui/gold-btn-border.svg");
     border-image-slice: 12;
     border-image-repeat: stretch;
 }
