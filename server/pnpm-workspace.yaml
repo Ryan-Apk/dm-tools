@@ -1,2 +1,4 @@
+# core-js is a transitive dependency whose informational postinstall is not
+# required for the Express server to run.
 allowBuilds:
-  core-js: set this to true or false
+  core-js: false

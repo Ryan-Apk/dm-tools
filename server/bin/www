@@ -4,9 +4,12 @@
  * Module dependencies.
  */
 
-const app = require('../app');
-const debug = require('debug')('server:server');
-const http = require('http');
+import createDebug from 'debug';
+import http from 'node:http';
+
+import app from '../app.js';
+
+const debug = createDebug('server:server');
 
 /**
  * Get port from environment and store in Express.
