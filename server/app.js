@@ -1,46 +1,59 @@
-import createError from 'http-errors';
 import express from 'express';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import cookieParser from 'cookie-parser';
-import logger from 'morgan';
 
-import indexRouter from './routes/index.js';
-import usersRouter from './routes/users.js';
+import apiDb from './routes/index.js';
+import authentication from './routes/authenticate.js';
+import mongoose, {mongo} from "mongoose";
+import dotenv from "dotenv";
+import rateLimit from "express-rate-limit";
 
-// ESM does not provide CommonJS path globals, so derive them from this module URL.
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+dotenv.config();
 
 const app = express();
+const port = process.env.PORT || 3000;
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'pug');
+// connect to MongoDB
+const mongoHost = process.env.MONGO_HOST || "localhost";
+const mongoPort = process.env.MONGO_PORT || "27017";
+const mongoDatabase = process.env.MONGO_DATABASE || "testDB";
+const mongoUsername = process.env.MONGO_USERNAME || "admin";
+const mongoPassword = process.env.MONGO_PASSWORD || "change_me";
 
-app.use(logger('dev'));
+const mongoUri = `mongodb://${mongoUsername}:${mongoPassword}@${mongoHost}:${mongoPort}/${mongoDatabase}?authSource=admin`;
+
+try {
+  await mongoose.connect(mongoUri);
+  console.log("Connected to MongoDB");
+} catch (err) {
+  console.error("MongoDB connection failed:", err);
+  process.exit(1);
+}
+
+// setup ratelimiting
+const globalLimiter = rateLimit({
+  windowMs:  60 * 1000, // 1 minute
+  limit: 120,
+  standardHeaders: true,   // sends RateLimit-* headers
+  legacyHeaders: false,    // disables X-RateLimit-* headers
+  message: {
+    error: "Too many requests, try again later."
+  }
+});
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+// adding this for behind proxy and then enable the limiter:
+app.set("trust proxy", 1);
+app.use(globalLimiter);
+app.use('/auth', authentication);
+app.use('/database', apiDb);
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
+// TODO setup the backend with a middleware to authenticate requests
+app.use((req, res) => {
+  res.status(404).json({ error: 'Endpoint not found' });
 });
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+// app.listen returns the HTTP server that a WebSocket server can share later.
+const server = app.listen(port, () => {
+  console.log(`Server started on port ${port}`);
 });
 
-export default app;
+export { app, server };

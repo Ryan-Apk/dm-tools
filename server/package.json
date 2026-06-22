@@ -3,20 +3,20 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@11.4.0",
+  "packageManager": "pnpm@11.6.0",
   "engines": {
     "node": "^20.19.0 || ^22.13.0 || >=24"
   },
   "scripts": {
-    "start": "node ./bin/www",
-    "dev": "node --watch ./bin/www"
+    "start-server": "node ./app.js",
+    "dev-server": "node --watch ./app.js"
   },
   "dependencies": {
-    "cookie-parser": "~1.4.4",
-    "debug": "~2.6.9",
     "express": "5.0.0",
-    "http-errors": "~1.6.3",
-    "morgan": "~1.9.1",
-    "pug": "3.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.7.1",
+    "dotenv": "^17.4.2",
+    "bcryptjs": "^3.0.3",
+    "express-rate-limit": "^8.5.2"
   }
 }
