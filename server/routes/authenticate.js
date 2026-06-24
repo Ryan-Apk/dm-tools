@@ -91,14 +91,20 @@ router.post("/login", loginLimiter, async (req, res) => {
             { expiresIn: jwtKeyExpireTime }
         );
 
-        // TODO make this return a cookie token to properly store it
+        // send cookie and response
         log("User successfully logged in: " + existingUser.email);
-        return res.status(200).json({
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 60 * 60 * 1000,
+        });
+
+        res.status(200).json({
             success: true,
             data: {
                 userId: existingUser.id,
                 email: existingUser.email,
-                token,
             },
         });
     } catch (err) {
@@ -160,12 +166,19 @@ router.post("/signup", loginLimiter, async (req, res) => {
 
         // TODO make this return a cookie token to properly store it
         log("New sign up: " + newUser.email + " " + newUser.username + " from " + req.ip);
-        res.status(201).json({
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            // 6hr persist time as most sessions last that long
+            maxAge: 6 * 60 * 60 * 1000,
+        });
+
+        return res.status(201).json({
             success: true,
             data: {
                 userId: newUser.id,
-                email: newUser.email,
-                token,
+                email: newUser.email
             },
         });
     } catch (err) {
@@ -178,22 +191,49 @@ router.post("/signup", loginLimiter, async (req, res) => {
 });
 
 // Sanitized Validation Handler: Ensures types are verified and outputs clean data targets
+// TODO probably should move this to a more general sanitise location
 function validateAuthInput({ username, email, password }, requireUsername = false) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (requireUsername && (!username || typeof username !== "string" || username.trim().length < 3)) {
-        return "Username must be at least 3 characters long";
+        return { error: "Username must be at least 3 characters long", data: null };
     }
 
     if (!email || typeof email !== "string" || !emailRegex.test(email.trim())) {
-        return "Invalid email address";
+        return { error: "Invalid email address", data: null };
     }
 
     if (!password || typeof password !== "string" || password.length < 8) {
-        return "Password must be at least 8 characters long";
+        return { error: "Password must be at least 8 characters long", data: null };
     }
 
-    return null;
+    return {
+        error: null,
+        data: {
+            username: username ? username.trim() : "",
+            email: email.trim(),
+            password: password
+        }
+    };
+}
+
+// middleware for authenticating people
+// TODO should probably move this to a different spot but im encapsulating everything here instead
+export function requireAuth(req, res, next) {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ error: "Missing token" });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    try {
+        req.user = jwt.verify(token, process.env.JWT_KEY);
+        next();
+    } catch {
+        return res.status(401).json({ error: "Invalid or expired token" });
+    }
 }
 
 export default router;
