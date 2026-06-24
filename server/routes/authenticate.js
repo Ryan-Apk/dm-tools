@@ -5,7 +5,7 @@ import User from '../models/User.js';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import rateLimit from "express-rate-limit";
-import {log} from "../tools/consoleHandler.js"
+import {log, logError, logWarn} from "../tools/consoleHandler.js"
 
 const router = express.Router();
 
@@ -55,23 +55,28 @@ router.post("/login", loginLimiter, async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // validate sign up information
-        const validationError = validateAuthInput({ email, password });
+        // validate sign up information and extract cleanly parsed fields
+        const validation = validateAuthInput({ email, password });
 
-        if (validationError) {
-            console.error("Recieved a malformed signup request: " + JSON.stringify(req.body) + " from " + req.ip);
+        if (validation.error) {
+            const { password, ...bodyWithoutPassword } = req.body;
+            logError("Recieved a malformed signup request: " + JSON.stringify(bodyWithoutPassword) + " from " + req.ip);
             return res.status(400).json({
                 success: false,
-                message: validationError,
+                message: validation.error,
             });
         }
 
-        const existingUser = await User.findOne({ email });
+        const cleanEmail = String(validation.data.email);
+        const cleanPassword = String(validation.data.password);
 
-        if (!existingUser || !(await bcrypt.compare(password, existingUser.password))) {
+        const existingUser = await User.findOne({ email: cleanEmail });
+
+        if (!existingUser || !(await bcrypt.compare(cleanPassword, existingUser.password))) {
             const error = new Error("Invalid email or password");
             error.status = 401;
-            console.warn("Failed login attempt: " + JSON.stringify(req.body) + " from " + JSON.stringify(req.ip));
+            const { password, ...bodyWithoutPassword } = req.body;
+            console.warn("Failed login attempt: " + JSON.stringify(bodyWithoutPassword) + " from " + JSON.stringify(req.ip));
             return res.status(401).json({
                 error: "Invalid email or password"
             });
@@ -97,7 +102,7 @@ router.post("/login", loginLimiter, async (req, res) => {
             },
         });
     } catch (err) {
-        console.error("/auth/login threw an error: \n" + err + "\n data: + \n" + req.body);
+        logError("/auth/login threw an error: \n" + err + "\n data: + \n" + req.body);
         return res.status(500).json({
             error: "An internal error has occured",
         });
@@ -109,34 +114,38 @@ router.post("/signup", loginLimiter, async (req, res) => {
     try {
         const { username, email, password } = req.body;
 
-        // validate sign up information
-        const validationError = validateAuthInput({ username, email, password }, true);
+        // validate sign up information and extract cleanly parsed fields
+        const validation = validateAuthInput({ username, email, password }, true);
 
-        if (validationError) {
-            console.error("Recieved a malformed signup request: " + JSON.stringify(req.body) + " from " + req.ip);
+        if (validation.error) {
+            const { password, ...bodyWithoutPassword } = req.body;
+            logError("Recieved a malformed signup request: " + JSON.stringify(bodyWithoutPassword) + " from " + req.ip);
             return res.status(400).json({
                 success: false,
-                message: validationError,
+                message: validation.error,
             });
         }
 
-        const newUser = new User({
-            username,
-            email,
-            password: await bcrypt.hash(password, 12),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        });
+        const cleanUsername = String(validation.data.username);
+        const cleanEmail = String(validation.data.email);
+        const cleanPassword = String(validation.data.password);
 
-        // see if the user currently exists already
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({ email: cleanEmail });
 
         if (existingUser) {
-            log("Someone tried to sign up with an existing account: " + newUser.email + " " + newUser.name + " from " + req.ip);
+            log("Someone tried to sign up with an existing account: " + cleanEmail + " from " + req.ip);
             return res.status(409).json({
                 error: "Email already exists",
             });
         }
+
+        const newUser = new User({
+            username: cleanUsername,
+            email: cleanEmail,
+            password: await bcrypt.hash(cleanPassword, 12),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
 
         await newUser.save();
 
@@ -150,7 +159,7 @@ router.post("/signup", loginLimiter, async (req, res) => {
         );
 
         // TODO make this return a cookie token to properly store it
-        log("New sign up: " + newUser.email + " " + newUser.name + " from " + req.ip);
+        log("New sign up: " + newUser.email + " " + newUser.username + " from " + req.ip);
         res.status(201).json({
             success: true,
             data: {
@@ -160,13 +169,15 @@ router.post("/signup", loginLimiter, async (req, res) => {
             },
         });
     } catch (err) {
-        console.error("/auth/signup threw an error: \n" + err + "\n data: + \n" + JSON.stringify(req.body));
+        const { password, ...bodyWithoutPassword } = req.body;
+        logError("/auth/signup threw an error: \n" + err + "\n data: + \n" + JSON.stringify(bodyWithoutPassword));
         return res.status(500).json({
             error: "An internal error has occured",
         });
     }
 });
 
+// Sanitized Validation Handler: Ensures types are verified and outputs clean data targets
 function validateAuthInput({ username, email, password }, requireUsername = false) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
