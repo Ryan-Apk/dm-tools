@@ -5,6 +5,7 @@ import User from '../models/User.js';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import rateLimit from "express-rate-limit";
+import {log} from "../tools/consoleHandler.js"
 
 const router = express.Router();
 
@@ -33,20 +34,23 @@ router.get('/', (req, res) => {
     res.json({ message: 'Available endpoints: /login, /signup' });
 });
 
+// returns an error code when sending a get to the post
 router.get('/login', (req, res) => {
-    console.log('Got GET /auth/login instead of POST: ' + req.body + " from " + req.ip);
+    log('Got GET /auth/login instead of POST: ' + req.body + " from " + req.ip);
     res.status(405).json({
         error: 'Use POST /auth/login instead',
     });
 });
 
+// returns an error code when sending a get to the post
 router.get('/signup', (req, res) => {
-    console.log('Got GET /auth/signup instead of POST: ' + req.body + " from " + req.ip);
+    log('Got GET /auth/signup instead of POST: ' + req.body + " from " + req.ip);
     res.status(405).json({
         error: 'Use POST /auth/signup instead',
     });
 });
 
+// if the required information is in, returns a token to the user
 router.post("/login", loginLimiter, async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -83,7 +87,7 @@ router.post("/login", loginLimiter, async (req, res) => {
         );
 
         // TODO make this return a cookie token to properly store it
-        console.log("User successfully logged in: " + existingUser.email);
+        log("User successfully logged in: " + existingUser.email);
         return res.status(200).json({
             success: true,
             data: {
@@ -100,6 +104,7 @@ router.post("/login", loginLimiter, async (req, res) => {
     }
 });
 
+// returns a token if the signup request is a valid request
 router.post("/signup", loginLimiter, async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -127,7 +132,7 @@ router.post("/signup", loginLimiter, async (req, res) => {
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
-            console.log("Someone tried to sign up with an existing account: " + newUser.email + " " + newUser.name + " from " + req.ip);
+            log("Someone tried to sign up with an existing account: " + newUser.email + " " + newUser.name + " from " + req.ip);
             return res.status(409).json({
                 error: "Email already exists",
             });
@@ -145,7 +150,7 @@ router.post("/signup", loginLimiter, async (req, res) => {
         );
 
         // TODO make this return a cookie token to properly store it
-        console.log("New sign up: " + newUser.email + " " + newUser.name + " from " + req.ip);
+        log("New sign up: " + newUser.email + " " + newUser.name + " from " + req.ip);
         res.status(201).json({
             success: true,
             data: {
