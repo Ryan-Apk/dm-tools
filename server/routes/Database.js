@@ -11,6 +11,7 @@ router.get('/', (req, res) => {
 // looks up the requested table and the id (as well as surrounding 10 values)
 router.get('/table/:table/:id', (req, res) => {
 
+  // TODO make this return something proper
 
   // check if the requested table exists
 

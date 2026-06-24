@@ -1,11 +1,10 @@
 import express from 'express';
 
-import apiDb from './routes/database.js';
-import authentication from './routes/authenticate.js';
-import mongoose, {mongo} from "mongoose";
+import apiDb from './routes/Database.js';
+import authentication from './routes/Authenticate.js';
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
-import {requireAuth} from "./routes/authenticate.js";
+import {requireAuth} from "./routes/Authenticate.js";
 import CheckDbStatus from "./middlwares/CheckDbStatus.js";
 
 dotenv.config();

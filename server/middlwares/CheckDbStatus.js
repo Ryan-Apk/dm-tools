@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { log, logError } from '../tools/consoleHandler.js';
+import {log, logError, logWarn} from '../tools/consoleHandler.js';
 
 dotenv.config();
 
@@ -28,7 +28,7 @@ async function connectToMongo() {
     log('Attempting to connect to MongoDB...');
     try {
         await mongoose.connect(mongoUri, {
-            serverSelectionTimeoutMS: 2000, // Give it 2 seconds to look for the server
+            serverSelectionTimeoutMS: 3000, // Give it 3 seconds to look for the server
             connectTimeoutMS: 5000,
             bufferCommands: false
         });

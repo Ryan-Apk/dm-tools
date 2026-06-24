@@ -50,6 +50,8 @@ router.get('/signup', (req, res) => {
     });
 });
 
+// TODO fix this so that it doesnt crash with malformed body
+// todo update this so that it actually isnt a security risk as tokens do not currently expire :/
 // if the required information is in, returns a token to the user
 router.post("/login", loginLimiter, async (req, res) => {
     try {
@@ -81,6 +83,10 @@ router.post("/login", loginLimiter, async (req, res) => {
                 error: "Invalid email or password"
             });
         }
+
+        // Update the lastLogin field
+        existingUser.lastLogin = new Date();
+        existingUser.save();
 
         const token = jwt.sign(
             {
@@ -116,6 +122,7 @@ router.post("/login", loginLimiter, async (req, res) => {
 });
 
 // returns a token if the signup request is a valid request
+// TODO fix this so that it doesnt crash with malformed body
 router.post("/signup", loginLimiter, async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -151,6 +158,7 @@ router.post("/signup", loginLimiter, async (req, res) => {
             password: await bcrypt.hash(cleanPassword, 12),
             createdAt: new Date(),
             updatedAt: new Date(),
+            lastLogin: new Date(),
         });
 
         await newUser.save();
