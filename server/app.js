@@ -1,4 +1,4 @@
-import express from 'express';
+import express, {json, urlencoded} from 'express';
 
 import apiDb from './routes/Database.js';
 import authentication from './routes/Authenticate.js';
@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
 import {requireAuth} from "./routes/Authenticate.js";
 import CheckDbStatus from "./middlwares/CheckDbStatus.js";
+import {xss} from "express-xss-sanitizer";
 
 dotenv.config();
 
@@ -25,12 +26,17 @@ const globalLimiter = rateLimit({
 
 app.use(CheckDbStatus)
 app.use(express.json());
+
+// sanitise requests
+if (process.env.NODE_ENV === "production") {
+  app.use(json({limit:'1kb'}));
+  app.use(urlencoded({extended: true, limit:'1kb'}));
+  app.use(xss());
+}
+
 // adding this for behind proxy and then enable the limiter:
 app.set("trust proxy", 1);
 app.use(globalLimiter);
-
-// yo yo is da data banging right now? if not dont send it
-
 
 app.use('/auth', authentication);
 
