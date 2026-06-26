@@ -11,7 +11,7 @@ const RANGE = 1;
 
 // List available functions
 router.get('/', (req, res) => {
-  res.json({ message: 'Available endpoints: ' });
+  res.json({ status: 'success', message: 'Available endpoints: /table/:table/:id' });
 });
 
 // looks up the requested table and the id (as well as surrounding 10 values)
@@ -22,7 +22,7 @@ router.get('/table/:table/:id', xss(), async (req, res) => {
 
   if (!Number.isInteger(Number(queryId)) || queryId.trim() === '') {
     logError("User hit endpoint incorrectly: " + tableName + " with id " + queryId);
-    return res.status(400).json({ error: 'Usage: /table/[name]/[id] where [id] is a whole number.' });
+    return res.status(400).json({ status: 'error', error: 'Usage: /table/[name]/[id] where [id] is a whole number.' });
   }
 
   try {
@@ -31,7 +31,7 @@ router.get('/table/:table/:id', xss(), async (req, res) => {
     // ensure the table exists
     if (!table) {
       logError("User requested table that does not exist: " + tableName);
-      return res.status(404).json({ error: 'Requested table not found.' });
+      return res.status(404).json({ status: 'error', error: 'Requested table not found.' });
     }
 
     // get the range
@@ -46,11 +46,14 @@ router.get('/table/:table/:id', xss(), async (req, res) => {
         { returnDocument: 'after', projection: { entries: { $slice: [start, count] } } }
     );
 
-    return res.status(200).json({ data: updatedTable.entries });
+    // todo perhaps remove?
+    log("Result rolled: " + queryId + " on table " + tableName);
+
+    return res.status(200).json({ status: 'success', data: updatedTable.entries });
 
   } catch (error) {
     logError("Database for request threw a DB error: \n" + error);
-    return res.status(500).json({ error: 'An internal server error occurred.' });
+    return res.status(500).json({ status: 'error', error: 'An internal server error occurred.' });
   }
 });
 

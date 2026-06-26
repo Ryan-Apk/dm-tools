@@ -1,6 +1,7 @@
 import express, {json, urlencoded} from 'express';
 
-import apiDb from './routes/Database.js';
+import randomRoller from './routes/RandomTableRoller.js';
+import whiteboardRoute from './routes/WhiteboardLink.js';
 import authentication from './routes/Authenticate.js';
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
@@ -20,6 +21,7 @@ const globalLimiter = rateLimit({
   standardHeaders: true,   // sends RateLimit-* headers
   legacyHeaders: false,    // disables X-RateLimit-* headers
   message: {
+    status: "error",
     error: "Too many requests, try again later."
   }
 });
@@ -42,11 +44,12 @@ app.use('/auth', authentication);
 
 // everything below here requires an 18+ all access token to get into
 app.use(requireAuth);
-app.use('/database', apiDb);
+app.use('/database', randomRoller);
+app.use('/database/whiteboard', whiteboardRoute);
 
 // TODO setup the backend with a middleware to authenticate requests
 app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
+  res.status(404).json({ status: 'error', error: 'Endpoint not found' });
 });
 
 // app.listen returns the HTTP server that a WebSocket server can share later.

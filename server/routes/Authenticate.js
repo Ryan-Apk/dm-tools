@@ -25,6 +25,7 @@ const loginLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     message: {
+        status: "error",
         error: "Too many login attempts, try again later."
     }
 });
@@ -60,6 +61,7 @@ function sendMalformedAuthRequest(res, req, validation) {
     logError("Recieved a malformed signup request: " + JSON.stringify(bodyWithoutPassword) + " from " + req.ip);
 
     return res.status(400).json({
+        status: 'error',
         success: false,
         message: validation.error,
     });
@@ -68,6 +70,7 @@ function sendMalformedAuthRequest(res, req, validation) {
 // List available functions
 router.get('/', (req, res) => {
     res.json({
+        status: 'success',
         message: 'Available endpoints: /login, /signup'
     });
 });
@@ -77,6 +80,7 @@ router.get('/login', (req, res) => {
     log('Got GET /auth/login instead of POST: ' + req.body + " from " + req.ip);
 
     res.status(405).json({
+        status: 'error',
         error: 'Use POST /auth/login instead',
     });
 });
@@ -86,6 +90,7 @@ router.get('/signup', (req, res) => {
     log('Got GET /auth/signup instead of POST: ' + req.body + " from " + req.ip);
 
     res.status(405).json({
+        status: 'error',
         error: 'Use POST /auth/signup instead',
     });
 });
@@ -119,6 +124,7 @@ router.post("/login", loginLimiter, async (req, res) => {
             console.warn("Failed login attempt: " + JSON.stringify(bodyWithoutPassword) + " from " + JSON.stringify(req.ip));
 
             return res.status(401).json({
+                status: 'error',
                 error: "Invalid email or password"
             });
         }
@@ -135,6 +141,7 @@ router.post("/login", loginLimiter, async (req, res) => {
         sendAuthCookie(res, token, 60 * 60 * 1000);
 
         return res.status(200).json({
+            status: 'success',
             success: true,
             data: {
                 userId: existingUser.id,
@@ -145,6 +152,7 @@ router.post("/login", loginLimiter, async (req, res) => {
         logError("/auth/login threw an error: \n" + err + "\n data: + \n" + req.body);
 
         return res.status(500).json({
+            status: 'error',
             error: "An internal error has occured",
         });
     }
@@ -173,6 +181,7 @@ router.post("/signup", loginLimiter, async (req, res) => {
             log("Someone tried to sign up with an existing account: " + cleanEmail + " from " + req.ip);
 
             return res.status(409).json({
+                status: 'error',
                 error: "Email already exists",
             });
         }
@@ -197,6 +206,7 @@ router.post("/signup", loginLimiter, async (req, res) => {
         sendAuthCookie(res, token, 6 * 60 * 60 * 1000);
 
         return res.status(201).json({
+            status: 'success',
             success: true,
             data: {
                 userId: newUser.id,
@@ -209,6 +219,7 @@ router.post("/signup", loginLimiter, async (req, res) => {
         logError("/auth/signup threw an error: \n" + err + "\n data: + \n" + JSON.stringify(bodyWithoutPassword));
 
         return res.status(500).json({
+            status: 'error',
             error: "An internal error has occured",
         });
     }
@@ -257,6 +268,7 @@ export function requireAuth(req, res, next) {
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return res.status(401).json({
+            status: 'error',
             error: "Missing token"
         });
     }
@@ -268,6 +280,7 @@ export function requireAuth(req, res, next) {
         next();
     } catch {
         return res.status(401).json({
+            status: 'error',
             error: "Invalid or expired token"
         });
     }

@@ -70,6 +70,7 @@ if (process.env.NODE_ENV === 'dev') {
     // Inform the user immediately instead of making them hang
     logError(`Blocking request. MongoDB state is: ${state}`);
     return res.status(500).json({
+        status: 'error',
         error: 'Database not connected. A reconnection attempt has been initiated, please try again shortly.'
     });
 }
