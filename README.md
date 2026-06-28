@@ -2,6 +2,8 @@
 
 A set of tools for running D&D games. This project provides utilities to assist Dungeon Masters in managing campaigns, tracking game mechanics, and enhancing the overall D&D experience.
 
+### This tool is still in alpha/broken/unworking state, use at your own discretion. 
+
 ## Tech Stack
 
 - **Frontend Framework**: React 18.3.1
