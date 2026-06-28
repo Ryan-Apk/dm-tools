@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import {log, logError, logWarn} from '../tools/consoleHandler.js';
+import { log, logError } from '../tools/consoleHandler.js';
 
 dotenv.config();
 
@@ -22,22 +22,22 @@ let isReconnecting = false;
 
 // Centralised connection function
 async function connectToMongo() {
-    if (isReconnecting) return;
-    isReconnecting = true;
+  if (isReconnecting) return;
+  isReconnecting = true;
 
-    log('Attempting to connect to MongoDB...');
-    try {
-        await mongoose.connect(mongoUri, {
-            serverSelectionTimeoutMS: 3000, // Give it 3 seconds to look for the server
-            connectTimeoutMS: 5000,
-            bufferCommands: false
-        });
-        log('MongoDB connected successfully.');
-    } catch (err) {
-        logError('MongoDB connection attempt failed:', err.message);
-    } finally {
-        isReconnecting = false; // Reset flag so future requests can try again if still down
-    }
+  log('Attempting to connect to MongoDB...');
+  try {
+    await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 3000, // Give it 3 seconds to look for the server
+      connectTimeoutMS: 5000,
+      bufferCommands: false,
+    });
+    log('MongoDB connected successfully.');
+  } catch (err) {
+    logError('MongoDB connection attempt failed:', err.message);
+  } finally {
+    isReconnecting = false; // Reset flag so future requests can try again if still down
+  }
 }
 
 // Global listeners for general connection monitoring
@@ -48,29 +48,29 @@ mongoose.connection.on('disconnected', () => logError('MongoDB disconnected!'));
 connectToMongo();
 
 export default async function CheckDbStatus(req, res, next) {
-if (process.env.NODE_ENV === 'dev') {
-    log("Checking DB connection status...");
-}
+  if (process.env.NODE_ENV === 'dev') {
+    log('Checking DB connection status...');
+  }
 
-    const state = mongoose.connection.readyState;
+  const state = mongoose.connection.readyState;
 
-    // If connected (1), proceed instantly
-    if (state === 1) {
-        return next();
-    }
+  // If connected (1), proceed instantly
+  if (state === 1) {
+    return next();
+  }
 
-    // If state is 0 (disconnected), trigger reconnection in the background
-    if (state === 0) {
-        log('Database is offline. Triggering background reconnection...');
+  // If state is 0 (disconnected), trigger reconnection in the background
+  if (state === 0) {
+    log('Database is offline. Triggering background reconnection...');
 
-        // This fires the function in the background and moves to the next line immediately.
-        connectToMongo();
-    }
+    // This fires the function in the background and moves to the next line immediately.
+    connectToMongo();
+  }
 
-    // Inform the user immediately instead of making them hang
-    logError(`Blocking request. MongoDB state is: ${state}`);
-    return res.status(500).json({
-        status: 'error',
-        error: 'Database not connected. A reconnection attempt has been initiated, please try again shortly.'
-    });
+  // Inform the user immediately instead of making them hang
+  logError(`Blocking request. MongoDB state is: ${state}`);
+  return res.status(500).json({
+    status: 'error',
+    error: 'Database not connected. A reconnection attempt has been initiated, please try again shortly.',
+  });
 }

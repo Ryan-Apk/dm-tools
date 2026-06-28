@@ -16,9 +16,17 @@
     "dotenv": "^17.4.2",
     "express": "5.0.0",
     "express-rate-limit": "^8.5.2",
+    "express-xss-sanitizer": "^2.0.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.7.1",
-    "express-xss-sanitizer": "^2.0.2",
     "validator": "^13.15.35"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.5",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.6.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.32.0",
+    "globals": "^17.7.0"
   }
 }
