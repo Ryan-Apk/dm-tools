@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
   createdAt: Date,
   updatedAt: Date,
   lastLogin: Date,
+  tokenVersion: String,
 });
 
 const User = mongoose.model('User', userSchema);

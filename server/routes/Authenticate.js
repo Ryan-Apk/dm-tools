@@ -4,7 +4,8 @@ import User from '../models/User.js';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import rateLimit from "express-rate-limit";
-import { log, logError } from "../tools/consoleHandler.js"
+import { log, logError } from "../tools/consoleHandler.js";
+import { randomUUID } from 'node:crypto';
 
 const router = express.Router();
 
@@ -40,6 +41,7 @@ function createToken(user) {
         {
             userId: user.id,
             email: user.email,
+            tokenVersion: user.tokenVersion,
         },
         jwtKey,
         { expiresIn: jwtKeyExpireTime }
@@ -66,6 +68,8 @@ function sendMalformedAuthRequest(res, req, validation) {
         message: validation.error,
     });
 }
+
+/// TODO this whole file needs to be reworked to use the refresh token concept instead of the long lived token
 
 // List available functions
 router.get('/', (req, res) => {
@@ -131,7 +135,10 @@ router.post("/login", loginLimiter, async (req, res) => {
 
         // Update the lastLogin field
         existingUser.lastLogin = new Date();
-        existingUser.save();
+        existingUser.tokenVersion = randomUUID();
+        existingUser.save().catch((err) => {
+            logError("Background save failed for user login state:", err);
+        });
 
         const token = createToken(existingUser);
 
@@ -186,6 +193,8 @@ router.post("/signup", loginLimiter, async (req, res) => {
             });
         }
 
+        const tokenVersion = randomUUID();
+
         const newUser = new User({
             username: cleanUsername,
             email: cleanEmail,
@@ -193,6 +202,7 @@ router.post("/signup", loginLimiter, async (req, res) => {
             createdAt: new Date(),
             updatedAt: new Date(),
             lastLogin: new Date(),
+            tokenVersion: tokenVersion,
         });
 
         await newUser.save();
@@ -263,7 +273,7 @@ function validateAuthInput({ username, email, password }, requireUsername = fals
 
 // middleware for authenticating people
 // TODO should probably move this to a different spot but im encapsulating everything here instead
-export function requireAuth(req, res, next) {
+export async function requireAuth(req, res, next) {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -276,7 +286,21 @@ export function requireAuth(req, res, next) {
     const token = authHeader.split(" ")[1];
 
     try {
-        req.user = jwt.verify(token, process.env.JWT_KEY);
+        const decoded = jwt.verify(token, process.env.JWT_KEY);
+
+        // Look up the user in the database (explicitly selecting tokenVersion if hidden)
+        const user = await User.findById(decoded.userId).select('+tokenVersion');
+
+        // Check if the user exists and if their token version is still valid
+        if (!user || user.tokenVersion !== decoded.tokenVersion) {
+            return res.status(401).json({
+                status: 'error',
+                error: "Token has been revoked or user not found"
+            });
+        }
+
+        // 4. Attach the full, fresh user document to the request for your routes to use
+        req.user = user;
         next();
     } catch {
         return res.status(401).json({
@@ -285,6 +309,7 @@ export function requireAuth(req, res, next) {
         });
     }
 }
+
 
 export default router;
 
