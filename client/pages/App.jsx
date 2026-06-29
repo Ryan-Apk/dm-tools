@@ -3,6 +3,7 @@ import NotFound from './NotFound.jsx';
 import BugList from './BugList.jsx';
 import Button from '../components/Button.jsx';
 import NavBar from '../components/NavBar.jsx';
+import LoginModal from '../components/LoginModal.jsx';
 
 /// This is the file that returns the full function of the program, should only contain routes
 export default function App() {
@@ -15,9 +16,7 @@ export default function App() {
           path="/"
           component={App}
           element={(
-            <div className="flex flex-col items-center justify-center h-full p-10">
-              <h1 className="mt-4 font-bold">Test</h1>
-            </div>
+            <LoginModal />
 )}
         />
         <Route path="/bugs" element={<BugList />} />

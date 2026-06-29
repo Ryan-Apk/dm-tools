@@ -60,7 +60,7 @@ function sendAuthCookie(res, token, maxAge) {
 function sendMalformedAuthRequest(res, req, validation) {
     const bodyWithoutPassword = removePasswordFromBody(req.body);
 
-    logError("Recieved a malformed signup request: " + JSON.stringify(bodyWithoutPassword) + " from " + req.ip);
+    logError("Recieved a malformed request: " + JSON.stringify(bodyWithoutPassword) + " from " + req.ip);
 
     return res.status(400).json({
         status: 'error',
