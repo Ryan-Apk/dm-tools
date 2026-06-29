@@ -31,7 +31,7 @@ const loginLimiter = rateLimit({
     }
 });
 
-function removePasswordFromBody(body) {
+function removePasswordFromBody(body = { }) {
     const { password, ...bodyWithoutPassword } = body;
     return bodyWithoutPassword;
 }
@@ -104,17 +104,9 @@ router.get('/signup', (req, res) => {
 // if the required information is in, returns a token to the user
 router.post("/login", loginLimiter, async (req, res) => {
     try {
+        const email = req.body?.email ?? "";
+        const password = req.body?.password ?? "";
 
-        if (!req.body?.email?.trim() || !req.body?.password?.trim()){
-            return res.status(400).json({
-                status: 'error',
-                error: "Check inputs and try again"
-            });
-        }
-
-        const { email, password } = req.body;
-
-        // validate sign up information and extract cleanly parsed fields
         const validation = validateAuthInput({ email, password });
 
         if (validation.error) {
@@ -164,7 +156,9 @@ router.post("/login", loginLimiter, async (req, res) => {
             },
         });
     } catch (err) {
-        logError("/auth/login threw an error: \n" + err + "\n data: + \n" + req.body);
+        // Use the safe function here instead of accessing req.body directly
+        const safeBody = removePasswordFromBody(req.body);
+        logError("/auth/login threw an error: \n" + err + "\n data: \n" + JSON.stringify(safeBody));
 
         return res.status(500).json({
             status: 'error',
