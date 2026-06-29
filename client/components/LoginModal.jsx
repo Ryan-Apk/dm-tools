@@ -3,16 +3,18 @@ import InputField from './InputField.jsx';
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 
+// TODO put this in the config running
+const APIURL = process.env.API_URL;
+
 export default function LoginModal() {
+  // TODO in the future the API should be setup such that we can tell what error is happening
   const [hasEmailError, setHasEmailError] = useState(false);
   const [hasPasswordError, setHasPasswordError] = useState(false);
 
   const { mutate, isPending, isError } = useMutation({
     mutationFn: async ({ email, password }) => {
-      console.log(email);
-      console.log(password);
       // Configured fetch to perform a POST request
-      const res = await fetch('http://localhost:3000/auth/login', {
+      const res = await fetch(APIURL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -29,6 +31,7 @@ export default function LoginModal() {
       setHasPasswordError(false);
     },
     onError: (error) => {
+      // TODO make this return something more normal
       console.error(error);
       setHasEmailError(true);
       setHasPasswordError(true);
