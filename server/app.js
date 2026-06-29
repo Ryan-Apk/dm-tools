@@ -5,10 +5,11 @@ import whiteboardRoute from './routes/WhiteboardLink.js';
 import authentication, { requireAuth } from './routes/Authenticate.js';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
-import { log } from './tools/consoleHandler.js';
+import { log, logWarn } from './tools/consoleHandler.js';
 
 import CheckDbStatus from './middlwares/CheckDbStatus.js';
 import { xss } from 'express-xss-sanitizer';
+import cors from 'cors';
 
 dotenv.config();
 
@@ -27,15 +28,21 @@ const globalLimiter = rateLimit({
   },
 });
 
-app.use(CheckDbStatus);
-app.use(express.json());
-
-// sanitise requests
-if (process.env.NODE_ENV === 'production') {
-  app.use(json({ limit: '1kb' }));
-  app.use(urlencoded({ extended: true, limit: '1kb' }));
-  app.use(xss());
+// development-only CORS
+if (process.env.NODE_ENV !== 'production') {
+  logWarn('Warning: development CORS enabled. Set NODE_ENV=production before deployment.');
+  app.use(cors());
 }
+
+// database availability check
+app.use(CheckDbStatus);
+
+// parse request bodies
+app.use(express.json({ limit: '1kb' }));
+app.use(express.urlencoded({ extended: true, limit: '1kb' }));
+
+// sanitise input
+app.use(xss());
 
 // adding this for behind proxy and then enable the limiter:
 app.set('trust proxy', 1);

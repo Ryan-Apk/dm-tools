@@ -9,10 +9,12 @@
   },
   "scripts": {
     "start-server": "node ./app.js",
-    "dev-server": "node --watch ./app.js"
+    "dev-server": "node --watch ./app.js",
+    "jwt-key": "node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "5.0.0",
     "express-rate-limit": "^8.5.2",

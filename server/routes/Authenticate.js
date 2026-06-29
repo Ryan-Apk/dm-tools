@@ -104,6 +104,14 @@ router.get('/signup', (req, res) => {
 // if the required information is in, returns a token to the user
 router.post("/login", loginLimiter, async (req, res) => {
     try {
+
+        if (!req.body?.email?.trim() || !req.body?.password?.trim()){
+            return res.status(400).json({
+                status: 'error',
+                error: "Check inputs and try again"
+            });
+        }
+
         const { email, password } = req.body;
 
         // validate sign up information and extract cleanly parsed fields
