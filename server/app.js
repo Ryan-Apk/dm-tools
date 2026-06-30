@@ -31,7 +31,16 @@ const globalLimiter = rateLimit({
 // development-only CORS
 if (process.env.NODE_ENV !== 'production') {
   logWarn('Warning: development CORS enabled. Set NODE_ENV=production before deployment.');
-  app.use(cors());
+  app.use(cors({
+    // Replace with your frontend URL if you encounter credential matching errors
+    origin: true,
+
+    // Explicitly allow all incoming header varieties
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+
+    // Necessary to pass HTTP-only cookies across different local ports (e.g. 5173 to 3000)
+    credentials: true,
+  }));
 }
 
 // database availability check

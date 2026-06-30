@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 
 // TODO put this in the config running
-const APIURL = process.env.API_URL;
+const LOGINURL = 'localhost:3000/auth/login';
 
 export default function LoginModal() {
   // TODO in the future the API should be setup such that we can tell what error is happening
@@ -14,7 +14,7 @@ export default function LoginModal() {
   const { mutate, isPending, isError } = useMutation({
     mutationFn: async ({ email, password }) => {
       // Configured fetch to perform a POST request
-      const res = await fetch(APIURL, {
+      const res = await fetch(LOGINURL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -12,7 +12,7 @@ const router = express.Router();
 router.get('/', (req, res) => {
   res.json({
     status: 'success',
-    message: 'Available endpoints: /login, /signup',
+    message: 'Available endpoints: /get, /set',
   });
 });
 
