@@ -1,4 +1,4 @@
-/*@import url('https://googleapis.com');*/
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap');
 @import "tailwindcss";
 * {
     box-sizing: border-box;
@@ -9,14 +9,26 @@
     cursor: url("/World of Warcraft Pixel-pointer.png") 6 2, pointer !important;
 }
 
+@theme {
+    --color-primary:      #B91C1C;  /* buttons/actions */
+    --color-on-primary:   #F0DFA0;  /* text on primary (was gold-light) */
+    --color-accent:       #C9A227;  /* borders/headings */
+    --color-surface:      #EAD9B0;  /* panel bg */
+    --color-ink:          #2B1D14;  /* body text */
+    --color-secondary:    #1E3A2F;  /* optional 2nd panel */
+    --color-base: #1A1410;;
+}
+
 /* Fonts */
 /* Import Cinzel and Inter from Google Fonts */
 
 /* Apply Inter to the overall website body */
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Cinzel', serif;
     font-size: 16px;
     line-height: 1.6;
+    background-color: var(--color-base);
+    color: var(--color-on-primary);
 }
 
 /* Apply Cinzel to all headers for an epic, cinematic feel */
@@ -77,3 +89,11 @@ body,
     border-image-repeat: stretch;
 }
 
+.fantasy-border{
+    padding-left: 11.73px;
+    padding-right: 11.73px;
+    border: 12px solid transparent;
+    border-image-source: url("../client/public/ui/gold-btn-border.svg");
+    border-image-slice: 12;
+    border-image-repeat: stretch;
+}

@@ -43,14 +43,14 @@ export default function LoginModal({ closeModal }) {
 
   return (
     <div className="flex-H-V-Center flex-col">
-      <div className="border p-10 rounded-lg shadow-lg">
+      <div className="border-2 border-accent p-10 rounded-lg shadow-lg bg-surface text-ink">
         <h1 className="font-bold text-4xl mb-5">Login</h1>
         <form className="flex flex-col" onSubmit={handleSubmit}>
           <label htmlFor="email" className="flex flex-col text-xl mb-4">
             Email
             <InputField type="email" name="email" id="email" placeholder="Email" className="border rounded-md p-1 text-lg" />
             {isError && hasEmailError && (
-              <p className="text-red-800 text-xs">Check email is correct and try again.</p>
+              <p className="text-primary text-xs">Check email is correct and try again.</p>
             )}
           </label>
 
@@ -58,7 +58,7 @@ export default function LoginModal({ closeModal }) {
             Password
             <InputField type="password" name="password" id="password" placeholder="Password" className="border rounded-md p-1 text-lg" />
             {isError && hasPasswordError && (
-              <p className="text-red-800 text-xs">Check password is correct and try again.</p>
+              <p className="text-primary text-xs">Check password is correct and try again.</p>
             )}
           </label>
 
