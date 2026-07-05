@@ -1,5 +1,4 @@
 import { createContext, useContext, useState } from 'react';
-import LoginModal from '../components/LoginModal.jsx';
 
 const AuthContext = createContext(undefined);
 
@@ -20,12 +19,6 @@ export function AuthProvider({ children }) {
     }}
     >
       {children}
-      {isModalOpen && (
-        <div className="modal">
-          <h2>Session Expired</h2>
-          <LoginModal />
-        </div>
-      )}
     </AuthContext.Provider>
   );
 }

@@ -5,9 +5,10 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createQueryClient } from './context/Tanstack.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import LoginModal from './components/LoginModal.jsx';
 
 function AppContent() {
-  const { openExpiryModal } = useAuth();
+  const { isModalOpen, openExpiryModal } = useAuth();
 
   // Memoize client creation so it doesn't re-instantiate on re-renders
   const queryClient = useMemo(() => createQueryClient(openExpiryModal), [openExpiryModal]);
@@ -15,6 +16,12 @@ function AppContent() {
   return (
     <QueryClientProvider client={queryClient}>
       <App />
+      {isModalOpen && (
+        <div className="modal">
+          <h2>Session Expired</h2>
+          <LoginModal />
+        </div>
+      )}
     </QueryClientProvider>
   );
 }
