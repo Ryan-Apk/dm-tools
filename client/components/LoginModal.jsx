@@ -2,33 +2,26 @@ import Button from './Button.jsx';
 import InputField from './InputField.jsx';
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { apiFetch } from '../utils/api.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
-// TODO put this in the config running
-const LOGINURL = 'localhost:3000/auth/login';
-
-export default function LoginModal() {
+export default function LoginModal({ closeModal }) {
   // TODO in the future the API should be setup such that we can tell what error is happening
   const [hasEmailError, setHasEmailError] = useState(false);
   const [hasPasswordError, setHasPasswordError] = useState(false);
+  const { login } = useAuth();
 
   const { mutate, isPending, isError } = useMutation({
-    mutationFn: async ({ email, password }) => {
-      // Configured fetch to perform a POST request
-      const res = await fetch(LOGINURL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!res.ok) throw new Error('Login failed');
-      return res.json();
-    },
+    mutationFn: ({ email, password }) => apiFetch('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+      skipAuthRetry: true,
+    }),
     onSuccess: (data) => {
-      console.log('Login successful:', data);
+      login(data.data);
       setHasEmailError(false);
       setHasPasswordError(false);
+      closeModal?.();
     },
     onError: (error) => {
       // TODO make this return something more normal

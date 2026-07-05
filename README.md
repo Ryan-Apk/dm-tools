@@ -51,11 +51,14 @@ MONGO_PASSWORD=change_me
 
 # JWT Configuration
 JWT_KEY=your_super_secret_jwt_key_change_this_in_production
-JWT_KEY_EXPIRE=1h
+JWT_KEY_EXPIRE=15m
+JWT_REFRESH_KEY=your_super_secret_refresh_key_change_this_in_production
+JWT_REFRESH_KEY_EXPIRE=7d
 ```
 
 **Required Variables:**
-- `JWT_KEY` - **REQUIRED** - Secret key for JWT token signing. Must be set or the server will not start
+- `JWT_KEY` - **REQUIRED** - Secret key for signing short-lived access tokens. Must be set or the server will not start
+- `JWT_REFRESH_KEY` - **REQUIRED** - Separate secret key for signing long-lived refresh tokens. Must be set or the server will not start
 - `PORT` - Server port (default: 3000)
 - `NODE_ENV` - Set to "production" for production deployments
 - `MONGO_HOST` - MongoDB host (default: localhost)
@@ -63,7 +66,8 @@ JWT_KEY_EXPIRE=1h
 - `MONGO_DATABASE` - MongoDB database name (default: testDB)
 - `MONGO_USERNAME` - MongoDB username (default: admin)
 - `MONGO_PASSWORD` - MongoDB password (default: change_me)
-- `JWT_KEY_EXPIRE` - JWT token expiration time (default: 1h)
+- `JWT_KEY_EXPIRE` - Access token expiration time (default: 15m)
+- `JWT_REFRESH_KEY_EXPIRE` - Refresh token expiration time (default: 7d)
 
 ### Installation
 
@@ -237,7 +241,7 @@ dm-tools/
 
 ## Security Notes
 
-- Always change the `JWT_KEY` in production to a strong, random value
+- Always change `JWT_KEY` and `JWT_REFRESH_KEY` in production to strong, random, and distinct values
 - Never commit `.env` files with real credentials to version control
 - The server includes rate limiting to prevent abuse (120 requests per minute globally, 5 login attempts per 15 minutes)
 - XSS sanitization is enabled in production mode

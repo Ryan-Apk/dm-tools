@@ -13,10 +13,16 @@ const router = express.Router();
 dotenv.config();
 
 const jwtKey = process.env.JWT_KEY;
-const jwtKeyExpireTime = process.env.JWT_KEY_EXPIRE || "1h";
+const jwtKeyExpireTime = process.env.JWT_KEY_EXPIRE || "15m";
+const jwtRefreshKey = process.env.JWT_REFRESH_KEY;
+const jwtRefreshKeyExpireTime = process.env.JWT_REFRESH_KEY_EXPIRE || "7d";
 
 if (!process.env.JWT_KEY) {
     throw new Error("JWT_KEY is required");
+}
+
+if (!process.env.JWT_REFRESH_KEY) {
+    throw new Error("JWT_REFRESH_KEY is required");
 }
 
 // more strict rate limiting (5 every 15m)
@@ -36,7 +42,7 @@ function removePasswordFromBody(body = { }) {
     return bodyWithoutPassword;
 }
 
-function createToken(user) {
+function createAccessToken(user) {
     return jwt.sign(
         {
             userId: user.id,
@@ -48,13 +54,57 @@ function createToken(user) {
     );
 }
 
-function sendAuthCookie(res, token, maxAge) {
-    res.cookie("token", token, {
+function createRefreshToken(user) {
+    return jwt.sign(
+        {
+            userId: user.id,
+            tokenVersion: user.tokenVersion,
+        },
+        jwtRefreshKey,
+        { expiresIn: jwtRefreshKeyExpireTime }
+    );
+}
+
+// Converts jsonwebtoken-style expiry strings ("15m", "7d") into a cookie maxAge in ms
+function parseExpiryToMs(expiry) {
+    const match = /^(\d+)([smhd])$/.exec(expiry);
+
+    if (!match) {
+        throw new Error(`Invalid expiry format: ${expiry}`);
+    }
+
+    const unitMs = {
+        s: 1000, m: 60 * 1000, h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000,
+    };
+
+    return Number(match[1]) * unitMs[match[2]];
+}
+
+function cookieAttrs(path) {
+    const isProd = process.env.NODE_ENV === 'production';
+    const crossSite = !isProd;
+    return {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge,
+        sameSite: crossSite ? 'none' : 'lax',
+        secure: crossSite ? true : isProd,   // none ⇒ must be Secure
+        path,
+    };
+}
+
+function setAuthCookies(res, accessToken, refreshToken) {
+    res.cookie('access_token', accessToken, {
+        ...cookieAttrs('/'),
+        maxAge: parseExpiryToMs(jwtKeyExpireTime),
     });
+    res.cookie('refresh_token', refreshToken, {
+        ...cookieAttrs('/auth'),
+        maxAge: parseExpiryToMs(jwtRefreshKeyExpireTime),
+    });
+}
+
+function clearAuthCookies(res) {
+    res.clearCookie('access_token', cookieAttrs('/'));
+    res.clearCookie('refresh_token', cookieAttrs('/auth'));
 }
 
 function sendMalformedAuthRequest(res, req, validation) {
@@ -68,8 +118,6 @@ function sendMalformedAuthRequest(res, req, validation) {
         message: validation.error,
     });
 }
-
-/// TODO this whole file needs to be reworked to use the refresh token concept instead of the long lived token
 
 // List available functions
 router.get('/', (req, res) => {
@@ -100,7 +148,6 @@ router.get('/signup', (req, res) => {
 });
 
 // TODO fix this so that it doesnt crash with malformed body
-// todo update this so that it actually isnt a security risk as tokens do not currently expire :/
 // if the required information is in, returns a token to the user
 router.post("/login", loginLimiter, async (req, res) => {
     try {
@@ -140,12 +187,13 @@ router.post("/login", loginLimiter, async (req, res) => {
             logError("Background save failed for user login state:", err);
         });
 
-        const token = createToken(existingUser);
+        const accessToken = createAccessToken(existingUser);
+        const refreshToken = createRefreshToken(existingUser);
 
-        // send cookie and response
+        // send cookies and response
         log("User successfully logged in: " + existingUser.email);
 
-        sendAuthCookie(res, token, 60 * 60 * 1000);
+        setAuthCookies(res, accessToken, refreshToken);
 
         return res.status(200).json({
             status: 'success',
@@ -209,13 +257,12 @@ router.post("/signup", loginLimiter, async (req, res) => {
 
         await newUser.save();
 
-        const token = createToken(newUser);
+        const accessToken = createAccessToken(newUser);
+        const refreshToken = createRefreshToken(newUser);
 
-        // TODO make this return a cookie token to properly store it
         log("New sign up: " + newUser.email + " " + newUser.username + " from " + req.ip);
 
-        // 6hr persist time as most sessions last that long
-        sendAuthCookie(res, token, 6 * 60 * 60 * 1000);
+        setAuthCookies(res, accessToken, refreshToken);
 
         return res.status(201).json({
             status: 'success',
@@ -236,6 +283,82 @@ router.post("/signup", loginLimiter, async (req, res) => {
         });
     }
 });
+
+// verifies the refresh token cookie and issues a fresh access token
+router.post('/refresh', async (req, res) => {
+    const refreshToken = req.cookies?.refresh_token;
+
+    if (!refreshToken) {
+        return res.status(401).json({
+            status: 'error',
+            error: "Missing refresh token",
+        });
+    }
+
+    try {
+        const decoded = jwt.verify(refreshToken, jwtRefreshKey);
+        const user = await User.findById(decoded.userId).select('+tokenVersion');
+
+        if (!user || user.tokenVersion !== decoded.tokenVersion) {
+            clearAuthCookies(res);
+
+            return res.status(401).json({
+                status: 'error',
+                error: "Refresh token has been revoked or user not found",
+            });
+        }
+
+        const accessToken = createAccessToken(user);
+
+        res.cookie('access_token', accessToken, {
+            ...cookieAttrs('/'),
+            maxAge: parseExpiryToMs(jwtKeyExpireTime),
+        });
+
+        return res.status(200).json({
+            status: 'success',
+            success: true,
+        });
+    } catch {
+        clearAuthCookies(res);
+
+        return res.status(401).json({
+            status: 'error',
+            error: "Invalid or expired refresh token",
+        });
+    }
+});
+
+// revokes all outstanding tokens for the user (if any) and clears auth cookies
+router.post('/logout', async (req, res) => {
+    const refreshToken = req.cookies?.refresh_token;
+
+    if (refreshToken) {
+        try {
+            const decoded = jwt.verify(refreshToken, jwtRefreshKey);
+            await User.findByIdAndUpdate(decoded.userId, { tokenVersion: randomUUID() });
+        } catch {
+            // nothing to revoke if the refresh token was already invalid/expired
+        }
+    }
+
+    clearAuthCookies(res);
+
+    return res.status(200).json({
+        status: 'success',
+        success: true,
+    });
+});
+
+// returns the currently authenticated user
+router.get('/me', requireAuth, (req, res) => res.status(200).json({
+    status: 'success',
+    success: true,
+    data: {
+        userId: req.user.id,
+        email: req.user.email,
+    },
+}));
 
 // Sanitized Validation Handler: Ensures types are verified and outputs clean data targets
 // TODO probably should move this to a more general sanitise location
@@ -276,19 +399,17 @@ function validateAuthInput({ username, email, password }, requireUsername = fals
 // middleware for authenticating people
 // TODO should probably move this to a different spot but im encapsulating everything here instead
 export async function requireAuth(req, res, next) {
-    const authHeader = req.headers.authorization;
+    const token = req.cookies?.access_token;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!token) {
         return res.status(401).json({
             status: 'error',
             error: "Missing token"
         });
     }
 
-    const token = authHeader.split(" ")[1];
-
     try {
-        const decoded = jwt.verify(token, process.env.JWT_KEY);
+        const decoded = jwt.verify(token, jwtKey);
 
         // Look up the user in the database (explicitly selecting tokenVersion if hidden)
         const user = await User.findById(decoded.userId).select('+tokenVersion');

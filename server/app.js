@@ -10,6 +10,7 @@ import { log, logWarn } from './tools/consoleHandler.js';
 import CheckDbStatus from './middlwares/CheckDbStatus.js';
 import { xss } from 'express-xss-sanitizer';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
@@ -49,6 +50,7 @@ app.use(CheckDbStatus);
 // parse request bodies
 app.use(express.json({ limit: '1kb' }));
 app.use(express.urlencoded({ extended: true, limit: '1kb' }));
+app.use(cookieParser());
 
 // sanitise input
 app.use(xss());

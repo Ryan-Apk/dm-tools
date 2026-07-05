@@ -8,7 +8,7 @@ import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import LoginModal from './components/LoginModal.jsx';
 
 function AppContent() {
-  const { isModalOpen, openExpiryModal } = useAuth();
+  const { isModalOpen, openExpiryModal, closeExpiryModal } = useAuth();
 
   // Memoize client creation so it doesn't re-instantiate on re-renders
   const queryClient = useMemo(() => createQueryClient(openExpiryModal), [openExpiryModal]);
@@ -19,7 +19,7 @@ function AppContent() {
       {isModalOpen && (
         <div className="modal">
           <h2>Session Expired</h2>
-          <LoginModal />
+          <LoginModal closeModal={closeExpiryModal} />
         </div>
       )}
     </QueryClientProvider>

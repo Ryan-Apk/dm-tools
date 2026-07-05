@@ -1,13 +1,13 @@
 export default function BugList() {
   const bugs = [
     'Issue with Firefox mouse cursors where clicking the button breaks them',
+    'Multi device login not possible (and probably wont be any time soon)',
   ];
 
   const roadmap = [
     'Feature for recording rolled dice',
     'Feature for rolling dice',
     'Roll on the d10000 table',
-    'Proper refresh token authentication instead of just tokens',
   ];
 
   return (
