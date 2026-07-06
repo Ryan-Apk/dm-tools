@@ -11,12 +11,13 @@
 
 @theme {
     --color-primary:      #B91C1C;  /* buttons/actions */
-    --color-on-primary:   #F0DFA0;  /* text on primary (was gold-light) */
+    --color-on-primary:   #F0DFA0;  /* text on primary */
     --color-accent:       #C9A227;  /* borders/headings */
     --color-surface:      #EAD9B0;  /* panel bg */
     --color-ink:          #2B1D14;  /* body text */
     --color-secondary:    #1E3A2F;  /* optional 2nd panel */
-    --color-base: #1A1410;;
+    --color-base: #1A1410;
+    --color-base-transparent: rgb(26 20 16 / 0.8);
 }
 
 /* Fonts */

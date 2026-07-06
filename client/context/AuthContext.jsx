@@ -27,6 +27,11 @@ export function AuthProvider({ children }) {
     setIsModalOpen(false);
   }, []);
 
+  const signup = useCallback((userData) => {
+    setUser(userData);
+    setIsModalOpen(false);
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await apiFetch('/auth/logout', { method: 'POST', skipAuthRetry: true });
@@ -44,7 +49,8 @@ export function AuthProvider({ children }) {
     isLoading,
     login,
     logout,
-  }), [isModalOpen, openExpiryModal, closeExpiryModal, user, isLoading, login, logout]);
+    signup,
+  }), [isModalOpen, openExpiryModal, closeExpiryModal, user, isLoading, login, logout, signup]);
 
   // todo add sign up option to below
   return (
