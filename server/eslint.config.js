@@ -1,22 +1,27 @@
-import { FlatCompat } from "@eslint/eslintrc";
 import js from "@eslint/js";
 
-const compat = new FlatCompat({
-  baseDirectory: import.meta.dirname,
-  recommendedConfig: js.configs.recommended
-});
-
 export default [
-  // 1. Load Airbnb rules
-  ...compat.extends("airbnb-base"),
+  // 1. Native ESLint core rules (instant performance)
+  js.configs.recommended,
 
-  // 2. Safely patch the rules for ESLint v10
+  // 2. Pure Airbnb backend style rules injected statically (zero lag)
   {
     rules: {
-      "import/extensions": "off",
-      "no-console": "off",      // Keeps your backend logs clean
-      "import/order": "off",     // CRITICAL: Stops the "sourceCode.getTokenOrCommentBefore" crash
-      "import/no-unresolved": "off" // Optional: Stops legacy import plugin pathing errors
+      "no-var": "error",
+      "prefer-const": "error",
+      "prefer-arrow-callback": "error",
+      "arrow-body-style": ["error", "as-needed"],
+      "object-shorthand": "error",
+      "quote-props": ["error", "as-needed"],
+      eqeqeq: ["error", "always", { null: "ignore" }],
+      "no-else-return": ["error", { allowElseIf: false }],
+      "no-eval": "error",
+      "no-implied-eval": "error",
+      "no-param-reassign": ["error", { props: true }],
+      strict: ["error", "global"],
+
+      // 3. Your specific backend overrides
+      "no-console": "off"
     }
   }
 ];

@@ -4,8 +4,8 @@ import User from '../models/User.js';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import rateLimit from "express-rate-limit";
-import { log, logError } from "../tools/consoleHandler.js";
-import { randomUUID } from 'node:crypto';
+import {log, logError} from "../tools/consoleHandler.js";
+import {randomUUID} from 'node:crypto';
 
 const router = express.Router();
 
@@ -252,7 +252,7 @@ router.post("/signup", loginLimiter, async (req, res) => {
             createdAt: new Date(),
             updatedAt: new Date(),
             lastLogin: new Date(),
-            tokenVersion: tokenVersion,
+            tokenVersion,
         });
 
         await newUser.save();
@@ -351,14 +351,33 @@ router.post('/logout', async (req, res) => {
 });
 
 // returns the currently authenticated user
-router.get('/me', requireAuth, (req, res) => res.status(200).json({
-    status: 'success',
-    success: true,
-    data: {
-        userId: req.user.id,
-        email: req.user.email,
-    },
-}));
+router.get('/me', requireAuth, async (req, res) => {
+
+    // lookup some additional data
+    const user = await User.findOne({ email: req.user.email }).select('campaignAssigned');
+    const campaignsAssigned = user ? user.campaignAssigned : [];
+
+    if ((process.env.NODE_ENV === 'dev')) {
+        const data = {
+            userId: req.user.id,
+              email: req.user.email,
+              username: req.user.username,
+              campaigns: campaignsAssigned,
+        }
+        log(JSON.stringify(data))
+    }
+
+    return (res.status(200).json({
+        status: 'success',
+        success: true,
+        data: {
+            userId: req.user.id,
+            email: req.user.email,
+            username: req.user.username,
+            campaigns: campaignsAssigned,
+        },
+    }))
+});
 
 // Sanitized Validation Handler: Ensures types are verified and outputs clean data targets
 // TODO probably should move this to a more general sanitise location
@@ -391,7 +410,7 @@ function validateAuthInput({ username, email, password }, requireUsername = fals
         data: {
             username: username ? username.trim() : "",
             email: email.trim(),
-            password: password
+            password
         }
     };
 }

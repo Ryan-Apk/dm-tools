@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap');
 @import "tailwindcss";
+@source not "../server";
 * {
     box-sizing: border-box;
     cursor: url("/World of Warcraft Pixel-cursor.png") 6 2, auto !important;
@@ -12,7 +13,7 @@
 @theme {
     --color-primary:      #B91C1C;  /* buttons/actions */
     --color-on-primary:   #F0DFA0;  /* text on primary */
-    --color-accent:       #C9A227;  /* borders/headings */
+    --color-accent:       #fbbf23;  /* borders/headings */
     --color-surface:      #EAD9B0;  /* panel bg */
     --color-ink:          #2B1D14;  /* body text */
     --color-secondary:    #1E3A2F;  /* optional 2nd panel */

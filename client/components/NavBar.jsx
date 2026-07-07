@@ -12,6 +12,9 @@ export default function NavBar() {
 
   const go = (path) => { navigate(path); setOpen(false); };
 
+  const username = user?.username || 'Error: login again';
+  const email = user?.email || 'Error';
+
   const navButtons = (
     <>
       <Button onClick={() => go('/')}>Home</Button>
@@ -25,7 +28,13 @@ export default function NavBar() {
   const authButtons = !isLoading && (
     isAuthenticated ? (
       <>
-        <span className="font-extrabold">{user.email}</span>
+        <span className="font-extrabold">
+          {username}
+          {' '}
+          |
+          {' '}
+          {email}
+        </span>
         <Button type="button" onClick={() => { logout(); setOpen(false); }}>Log out</Button>
       </>
     ) : (

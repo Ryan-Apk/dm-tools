@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
   createdAt: Date,
   updatedAt: Date,
   lastLogin: Date,
+  campaignAssigned: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Campaign', default: null }],
   tokenVersion: String,
 });
 

@@ -6,21 +6,10 @@ import NavBar from '../components/NavBar.jsx';
 import Login from './Login.jsx';
 import Signup from './Signup.jsx';
 import { useQuery } from '@tanstack/react-query'; // Adjust path if needed
-import { apiFetch } from '../utils/api.js';
 import Home from './Home.jsx';
 import AuthGate from '../components/AuthGate.jsx';
-
-function DiceRoller() {
-  const { data } = useQuery({
-    queryKey: ['whiteboard'],
-    queryFn: () => apiFetch('/database/whiteboard/get'),
-  });
-  return (
-    <div>
-      {JSON.stringify(data)}
-    </div>
-  );
-}
+import DiceRoller from './DicerRollers.jsx';
+import Loading from '../components/Loading element.jsx';
 
 /// This is the file that returns the full function of the program, should only contain routes
 export default function App() {
@@ -30,6 +19,7 @@ export default function App() {
       <AuthGate>
         <Routes>
           {/* The below routes to the home.jsx page */}
+          <Route path="/loading" element={<Loading />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           {/* TODO remove this temporary testing page */}

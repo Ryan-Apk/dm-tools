@@ -14,6 +14,30 @@ router.get('/', (req, res) => {
   res.json({ status: 'success', message: 'Available endpoints: /table/:table/:id' });
 });
 
+router.get('/getall', async (req, res) => res.status(400).json({ status: 'error', message: 'Make sure you are in a campaign' }));
+
+/* Returns the number of tables, and their names through the api */
+router.get('/getall/:campaignId', async (req, res) => {
+
+  if (!req.params){
+    return res.status(401).json({
+      status: 'error',
+      message: 'Malformed request',
+    });
+  }
+
+    // ask mongodb for all the table names
+    const results = await EffectsTable.find({}).select(['name', 'description', 'numEntries']);  // format the table names and information
+    // return it
+    res.status(200).json({
+      body: req.body,      // Data sent in the request body (POST/PUT)
+      query: req.query,    // URL search params (e.g., ?search=items)
+      params: req.params,  // Dynamic route segments (e.g., /user/:id)
+      headers: req.headers // Metadata like authorization tokens
+    })
+  }
+);
+
 // looks up the requested table and the id (as well as surrounding 10 values)
 router.get('/table/:table/:id', xss(), async (req, res) => {
   const tableName = req.params.table;

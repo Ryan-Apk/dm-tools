@@ -1,4 +1,4 @@
-import express, { json, urlencoded } from 'express';
+import express from 'express';
 
 import randomRoller from './routes/RandomTableRoller.js';
 import whiteboardRoute from './routes/WhiteboardLink.js';
@@ -63,7 +63,7 @@ app.use('/auth', authentication);
 
 // everything below here requires an 18+ all access token to get into
 app.use(requireAuth);
-app.use('/database', randomRoller);
+app.use('/database/dice', randomRoller);
 app.use('/database/whiteboard', whiteboardRoute);
 
 // TODO setup the backend with a middleware to authenticate requests
