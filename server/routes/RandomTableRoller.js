@@ -1,5 +1,5 @@
 import express from 'express';
-import { log, logError } from '../tools/consoleHandler.js';
+import {log, logError, logWarn} from '../tools/consoleHandler.js';
 import EffectsTable from '../models/EffectsTable.js';
 import { xss } from 'express-xss-sanitizer';
 
@@ -27,13 +27,40 @@ router.get('/getall/:campaignId', async (req, res) => {
   }
 
     // ask mongodb for all the table names
-    const results = await EffectsTable.find({}).select(['name', 'description', 'numEntries']);  // format the table names and information
-    // return it
+    const results = await EffectsTable.find({}).select(['name', 'description', 'numEntries', 'campaignIds']);  // format the table names and information
+
+    // 1. Split the string into an array of IDs (e.g., "1,2,3" becomes ["1", "2", "3"])
+    const campaignIdParam = req.params.campaignId;
+    const targetCampaignIds = campaignIdParam ? JSON.parse(req.params.campaignId) : [];
+
+    // TODO add a check to see if there are no campaigns and return that
+  if (!targetCampaignIds) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Ensure you are in a campaign',
+    })
+  }
+
+    const tables = [];
+
+  for (const table of results) {
+    const hasMatchingId = targetCampaignIds.some(id =>
+      table.campaignIds.includes(id)
+    );
+
+    if (hasMatchingId) {
+      const plainTable = table.toObject();
+
+      tables.push(plainTable);
+    }
+  }
+
+
+
+  // return it
     res.status(200).json({
-      body: req.body,      // Data sent in the request body (POST/PUT)
-      query: req.query,    // URL search params (e.g., ?search=items)
-      params: req.params,  // Dynamic route segments (e.g., /user/:id)
-      headers: req.headers // Metadata like authorization tokens
+      status: 'success',
+      data: tables,
     })
   }
 );

@@ -20,8 +20,8 @@ export default function LoginModal({ closeModal }) {
       body: JSON.stringify({ email, password }),
       skipAuthRetry: true,
     }),
-    onSuccess: (data) => {
-      login(data.data);
+    onSuccess: async () => {
+      await login();
       setHasEmailError(false);
       setHasPasswordError(false);
       closeModal?.();

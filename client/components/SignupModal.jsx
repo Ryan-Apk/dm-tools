@@ -19,9 +19,9 @@ export default function SignupModal({ closeModal }) {
       body: JSON.stringify({ username, email, password }),
       skipAuthRetry: true,
     }),
-    onSuccess: (data) => {
+    onSuccess: async () => {
       // signup sets the auth cookies server-side, so we're logged in already
-      signup(data.data);
+      await signup();
       setHasError(false);
       closeModal?.();
     },

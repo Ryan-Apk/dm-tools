@@ -354,8 +354,9 @@ router.post('/logout', async (req, res) => {
 router.get('/me', requireAuth, async (req, res) => {
 
     // lookup some additional data
-    const user = await User.findOne({ email: req.user.email }).select('campaignAssigned');
+    const user = await User.findOne({ email: req.user.email }).select('campaignAssigned currentCampaign');
     const campaignsAssigned = user ? user.campaignAssigned : [];
+    const currentCampaign = user ? user.currentCampaign : null;
 
     if ((process.env.NODE_ENV === 'dev')) {
         const data = {
@@ -363,6 +364,7 @@ router.get('/me', requireAuth, async (req, res) => {
               email: req.user.email,
               username: req.user.username,
               campaigns: campaignsAssigned,
+              currentCampaign,
         }
         log(JSON.stringify(data))
     }
@@ -375,8 +377,60 @@ router.get('/me', requireAuth, async (req, res) => {
             email: req.user.email,
             username: req.user.username,
             campaigns: campaignsAssigned,
+            currentCampaign,
         },
     }))
+});
+
+// sets which of the user's assigned campaigns is currently active; the frontend
+// uses this to filter campaign-scoped data everywhere else
+router.patch('/me/campaign', requireAuth, async (req, res) => {
+    const { campaignId } = req.body ?? {};
+
+    try {
+        const user = await User.findById(req.user.id).select('campaignAssigned currentCampaign');
+
+        if (!user) {
+            return res.status(404).json({
+                status: 'error',
+                error: 'User not found',
+            });
+        }
+
+        if (campaignId === null || campaignId === undefined) {
+            user.currentCampaign = null;
+        } else {
+            const isAssigned = user.campaignAssigned.some((id) => id.toString() === String(campaignId));
+
+            if (!isAssigned) {
+                return res.status(400).json({
+                    status: 'error',
+                    error: 'You are not assigned to that campaign',
+                });
+            }
+
+            user.currentCampaign = campaignId;
+        }
+
+        await user.save();
+
+        log(`User ${req.user.email} set current campaign to ${user.currentCampaign}`);
+
+        return res.status(200).json({
+            status: 'success',
+            success: true,
+            data: {
+                currentCampaign: user.currentCampaign,
+            },
+        });
+    } catch (err) {
+        logError('/auth/me/campaign threw an error: \n' + err);
+
+        return res.status(400).json({
+            status: 'error',
+            error: 'Invalid campaign id',
+        });
+    }
 });
 
 // Sanitized Validation Handler: Ensures types are verified and outputs clean data targets

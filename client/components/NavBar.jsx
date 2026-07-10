@@ -16,13 +16,13 @@ export default function NavBar() {
   const email = user?.email || 'Error';
 
   const navButtons = (
-    <>
+    isAuthenticated && (<>
       <Button onClick={() => go('/')}>Home</Button>
       <Button onClick={() => go('/dice')}>Dice Rollers</Button>
       <Button>Test</Button>
       <Button>Test</Button>
-      <Button>Test</Button>
-    </>
+      <Button onClick={() => go('/bugslist')}>Bugs</Button>
+    </>)
   );
 
   const authButtons = !isLoading && (
@@ -35,7 +35,8 @@ export default function NavBar() {
           {' '}
           {email}
         </span>
-        <Button type="button" onClick={() => { logout(); setOpen(false); }}>Log out</Button>
+        <Button ariaLabel="Settings" onClick={() => go('/settings')}>⚙️</Button>
+        <Button type="button" onClick={() => { logout(); setOpen(false); go('/login') }}>Log out</Button>
       </>
     ) : (
       <Button onClick={() => go('/login')}>Log in</Button>
