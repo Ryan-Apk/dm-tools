@@ -3,6 +3,7 @@ import Panel from '../components/Panel.jsx';
 export default function BugList() {
   const bugs = [
     'Known issue where sometimes user data does not load until a refresh of the page happens',
+    'Dice roller page components have an issue where the buttons do not align, will fix later',
     'Issue with Firefox mouse cursors where clicking the button breaks them',
     'Multi device login not possible (and probably wont be any time soon)',
   ];
@@ -12,6 +13,7 @@ export default function BugList() {
     'Feature for rolling dice',
     'Roll on the d10000 table',
     'Currently, campaign data is not separated',
+    'Initative tracker',
   ];
 
   return (

@@ -29,7 +29,6 @@ router.get('/getall/:campaignId', async (req, res) => {
     // ask mongodb for all the table names
     const results = await EffectsTable.find({}).select(['name', 'description', 'numEntries', 'campaignIds']);  // format the table names and information
 
-    // 1. Split the string into an array of IDs (e.g., "1,2,3" becomes ["1", "2", "3"])
     const campaignIdParam = req.params.campaignId;
     const targetCampaignIds = campaignIdParam ? JSON.parse(req.params.campaignId) : [];
 
@@ -54,8 +53,6 @@ router.get('/getall/:campaignId', async (req, res) => {
       tables.push(plainTable);
     }
   }
-
-
 
   // return it
     res.status(200).json({

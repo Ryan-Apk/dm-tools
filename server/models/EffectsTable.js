@@ -17,7 +17,7 @@ const effectsTableSchema = new mongoose.Schema({
 
   // campaign is assigned here just incase we have 2 items that are only supposed to be used in 1 campaign each
   // made an array to ensure it can be duplicated across multiple campaigns
-  campaignIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Campaign', default: null }],
+  campaignIds: [{ type: String, default: null }],
 
   entries: { type: [entrySchema], default: [] },
 
